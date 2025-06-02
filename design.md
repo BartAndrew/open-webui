@@ -795,4 +795,717 @@ Kubernetes deployment configurations:
 
 ---
 
+## API Documentation
+
+### Authentication Endpoints
+- **POST** `/api/v1/auths/login`
+  - Login with username/password
+  - Returns JWT token
+  - Body: `{ "username": string, "password": string }`
+
+- **POST** `/api/v1/auths/register`
+  - Register new user
+  - Body: `{ "username": string, "email": string, "password": string }`
+
+- **GET** `/api/v1/auths/me`
+  - Get current user info
+  - Requires: JWT token
+
+### Chat Endpoints
+- **POST** `/api/v1/chat/completions`
+  - Generate chat completion
+  - Body: `{ "model": string, "messages": Message[], "stream": boolean }`
+  - Supports: streaming responses
+
+- **GET** `/api/v1/chats`
+  - List user's chat history
+  - Query params: `limit`, `offset`
+
+- **POST** `/api/v1/chats/{chat_id}/messages`
+  - Add message to chat
+  - Body: `{ "content": string, "role": "user"|"assistant" }`
+
+### Model Management
+- **GET** `/api/v1/models`
+  - List available models
+  - Query params: `provider`, `status`
+
+- **POST** `/api/v1/models`
+  - Create custom model
+  - Body: Model configuration
+
+- **PUT** `/api/v1/models/{model_id}`
+  - Update model settings
+  - Body: Updated configuration
+
+### Document Management
+- **POST** `/api/v1/files/upload`
+  - Upload document
+  - Multipart form data
+  - Supports: PDF, DOCX, TXT, etc.
+
+- **GET** `/api/v1/files`
+  - List uploaded files
+  - Query params: `type`, `limit`, `offset`
+
+- **DELETE** `/api/v1/files/{file_id}`
+  - Delete uploaded file
+
+### Knowledge Base
+- **POST** `/api/v1/knowledge`
+  - Create knowledge base
+  - Body: `{ "name": string, "description": string }`
+
+- **POST** `/api/v1/knowledge/{kb_id}/documents`
+  - Add documents to knowledge base
+  - Multipart form data
+
+- **GET** `/api/v1/knowledge/{kb_id}/search`
+  - Search knowledge base
+  - Query params: `q`, `limit`
+
+### Tools & Functions
+- **GET** `/api/v1/tools`
+  - List available tools
+  - Query params: `category`, `status`
+
+- **POST** `/api/v1/tools`
+  - Create custom tool
+  - Body: Tool definition
+
+- **POST** `/api/v1/functions`
+  - Register custom function
+  - Body: Function definition
+
+### Administration
+- **GET** `/api/v1/users`
+  - List users (admin only)
+  - Query params: `role`, `status`
+
+- **PUT** `/api/v1/users/{user_id}`
+  - Update user (admin only)
+  - Body: User updates
+
+- **GET** `/api/v1/configs`
+  - Get system configuration
+  - Requires: Admin access
+
+### WebSocket Endpoints
+- **WS** `/ws/socket.io`
+  - Real-time communication
+  - Events:
+    - chat_message
+    - status_update
+    - model_update
+    - error
+
+### Response Formats
+
+#### Success Response
+```json
+{
+  "status": true,
+  "data": {
+    // Response data
+  }
+}
+```
+
+#### Error Response
+```json
+{
+  "status": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Error description"
+  }
+}
+```
+
+### Authentication
+
+All API endpoints (except login/register) require authentication using one of:
+
+1. **JWT Token**
+   ```http
+   Authorization: Bearer <token>
+   ```
+
+2. **API Key**
+   ```http
+   X-API-Key: <api_key>
+   ```
+
+### Rate Limiting
+
+- Default: 100 requests per minute
+- Streaming endpoints: 10 concurrent connections
+- File uploads: 50 MB per file, 500 MB total per hour
+
+### Error Codes
+
+- `AUTH_001`: Authentication failed
+- `AUTH_002`: Token expired
+- `AUTH_003`: Invalid credentials
+- `RATE_001`: Rate limit exceeded
+- `MODEL_001`: Model not found
+- `MODEL_002`: Model error
+- `FILE_001`: File too large
+- `FILE_002`: Invalid file type
+
+---
+
+## Database Schema and Relationships
+
+### Core Tables
+
+#### Users
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'user',
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Chats
+```sql
+CREATE TABLE chats (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    title VARCHAR(255),
+    model VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) DEFAULT 'active',
+    settings JSONB
+);
+```
+
+#### Messages
+```sql
+CREATE TABLE messages (
+    id UUID PRIMARY KEY,
+    chat_id UUID REFERENCES chats(id),
+    role VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metadata JSONB,
+    tokens INTEGER,
+    rating INTEGER
+);
+```
+
+### Model Management
+
+#### Models
+```sql
+CREATE TABLE models (
+    id VARCHAR(100) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    provider VARCHAR(100) NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    config JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Model Versions
+```sql
+CREATE TABLE model_versions (
+    id UUID PRIMARY KEY,
+    model_id VARCHAR(100) REFERENCES models(id),
+    version VARCHAR(100) NOT NULL,
+    size BIGINT,
+    sha256 VARCHAR(64),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metadata JSONB
+);
+```
+
+### Document Management
+
+#### Documents
+```sql
+CREATE TABLE documents (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100),
+    size BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metadata JSONB
+);
+```
+
+#### Document Chunks
+```sql
+CREATE TABLE document_chunks (
+    id UUID PRIMARY KEY,
+    document_id UUID REFERENCES documents(id),
+    content TEXT NOT NULL,
+    embedding VECTOR(1536),
+    metadata JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Knowledge Management
+
+#### Knowledge Bases
+```sql
+CREATE TABLE knowledge_bases (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    user_id UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    settings JSONB
+);
+```
+
+#### Knowledge Items
+```sql
+CREATE TABLE knowledge_items (
+    id UUID PRIMARY KEY,
+    kb_id UUID REFERENCES knowledge_bases(id),
+    content TEXT NOT NULL,
+    embedding VECTOR(1536),
+    metadata JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Tools and Functions
+
+#### Tools
+```sql
+CREATE TABLE tools (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(100),
+    config JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Functions
+```sql
+CREATE TABLE functions (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    parameters JSONB,
+    code TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Relationships Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ CHATS : creates
+    USERS ||--o{ DOCUMENTS : owns
+    USERS ||--o{ KNOWLEDGE_BASES : manages
+    
+    CHATS ||--o{ MESSAGES : contains
+    CHATS }o--|| MODELS : uses
+    
+    MODELS ||--o{ MODEL_VERSIONS : has
+    
+    DOCUMENTS ||--o{ DOCUMENT_CHUNKS : chunked_into
+    DOCUMENTS }o--|| KNOWLEDGE_BASES : belongs_to
+    
+    KNOWLEDGE_BASES ||--o{ KNOWLEDGE_ITEMS : contains
+    
+    TOOLS ||--o{ FUNCTIONS : implements
+    MESSAGES }o--o{ TOOLS : uses
+```
+
+### Key Relationships
+
+1. **User Relationships**
+   - One user can have many chats
+   - One user can own many documents
+   - One user can manage many knowledge bases
+
+2. **Chat Relationships**
+   - Each chat belongs to one user
+   - Each chat uses one model
+   - One chat can have many messages
+
+3. **Document Relationships**
+   - Each document is owned by one user
+   - One document can have many chunks
+   - Documents can belong to multiple knowledge bases
+
+4. **Knowledge Base Relationships**
+   - Each knowledge base has one owner
+   - One knowledge base can have many items
+   - Knowledge bases can contain multiple documents
+
+5. **Tool Relationships**
+   - Tools can implement multiple functions
+   - Messages can use multiple tools
+   - Tools can be used across different chats
+
+### Indexing Strategy
+
+1. **Primary Indexes**
+   - All tables have UUID or VARCHAR primary keys
+   - UUIDs used for high-volume tables
+   - VARCHAR used for human-readable IDs
+
+2. **Foreign Key Indexes**
+   - All foreign key columns are indexed
+   - Composite indexes for common joins
+
+3. **Performance Indexes**
+   ```sql
+   -- Chat lookup by user
+   CREATE INDEX idx_chats_user_id ON chats(user_id);
+   
+   -- Message lookup by chat
+   CREATE INDEX idx_messages_chat_id ON messages(chat_id);
+   
+   -- Document lookup by user
+   CREATE INDEX idx_documents_user_id ON documents(user_id);
+   
+   -- Vector similarity search
+   CREATE INDEX idx_document_chunks_embedding ON document_chunks USING ivfflat (embedding vector_cosine_ops);
+   ```
+
+4. **Timestamp Indexes**
+   ```sql
+   -- Recent chat lookup
+   CREATE INDEX idx_chats_created_at ON chats(created_at DESC);
+   
+   -- Message timeline
+   CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
+   ```
+
+### Data Integrity
+
+1. **Foreign Key Constraints**
+   - ON DELETE CASCADE for child records
+   - ON DELETE RESTRICT for critical relationships
+
+2. **Check Constraints**
+   ```sql
+   -- Valid email format
+   ALTER TABLE users ADD CONSTRAINT valid_email
+       CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+   
+   -- Valid status values
+   ALTER TABLE users ADD CONSTRAINT valid_status
+       CHECK (status IN ('active', 'inactive', 'pending'));
+   ```
+
+3. **Unique Constraints**
+   ```sql
+   -- Unique usernames
+   ALTER TABLE users ADD CONSTRAINT unique_username
+       UNIQUE (username);
+   
+   -- Unique model versions
+   ALTER TABLE model_versions ADD CONSTRAINT unique_model_version
+       UNIQUE (model_id, version);
+   ```
+
+---
+
+## Security Best Practices and Implementation
+
+### Authentication Implementation
+
+1. **JWT Token Management**
+   ```python
+   # Token generation with secure claims
+   def generate_token(user_id: UUID) -> str:
+       payload = {
+           'sub': str(user_id),
+           'exp': datetime.utcnow() + timedelta(days=1),
+           'iat': datetime.utcnow(),
+           'type': 'access'
+       }
+       return jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
+   
+   # Token validation with proper error handling
+   def validate_token(token: str) -> dict:
+       try:
+           payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+           if payload['type'] != 'access':
+               raise InvalidTokenError()
+           return payload
+       except jwt.ExpiredSignatureError:
+           raise TokenExpiredError()
+       except jwt.InvalidTokenError:
+           raise InvalidTokenError()
+   ```
+
+2. **Password Security**
+   ```python
+   # Password hashing using Argon2
+   def hash_password(password: str) -> str:
+       return ph.hash(password)
+   
+   # Secure password verification
+   def verify_password(password: str, hash: str) -> bool:
+       try:
+           return ph.verify(hash, password)
+       except VerifyMismatchError:
+           return False
+   ```
+
+### API Security
+
+1. **Rate Limiting Implementation**
+   ```python
+   # Redis-based rate limiter
+   async def rate_limit(key: str, limit: int, window: int) -> bool:
+       async with redis.pipeline() as pipe:
+           now = int(time.time())
+           pipe.zremrangebyscore(key, 0, now - window)
+           pipe.zcard(key)
+           pipe.zadd(key, {str(now): now})
+           pipe.expire(key, window)
+           _, count, *_ = await pipe.execute()
+           return count <= limit
+   ```
+
+2. **Input Validation**
+   ```python
+   # Pydantic model for request validation
+   class ChatRequest(BaseModel):
+       model: str
+       messages: List[Message]
+       temperature: Optional[float] = Field(ge=0, le=2)
+       max_tokens: Optional[int] = Field(ge=1, le=4096)
+       
+       @validator('messages')
+       def validate_messages(cls, v):
+           if not v:
+               raise ValueError('messages cannot be empty')
+           return v
+   ```
+
+### Data Protection
+
+1. **Encryption at Rest**
+   ```python
+   # File encryption using Fernet
+   def encrypt_file(file_path: str, key: bytes) -> None:
+       f = Fernet(key)
+       with open(file_path, 'rb') as file:
+           file_data = file.read()
+       encrypted_data = f.encrypt(file_data)
+       with open(file_path, 'wb') as file:
+           file.write(encrypted_data)
+   ```
+
+2. **Secure File Handling**
+   ```python
+   # Secure file upload with validation
+   async def handle_file_upload(file: UploadFile) -> str:
+       # Validate file type
+       if not allowed_file_type(file.filename):
+           raise InvalidFileType()
+           
+       # Generate secure filename
+       filename = secure_filename(file.filename)
+       
+       # Scan for malware
+       if await virus_scan(file):
+           raise MaliciousFileError()
+           
+       # Save with proper permissions
+       path = os.path.join(UPLOAD_DIR, filename)
+       with open(path, 'wb') as buffer:
+           shutil.copyfileobj(file.file, buffer)
+       os.chmod(path, 0o644)
+       
+       return filename
+   ```
+
+### XSS Prevention
+
+1. **Content Security Policy**
+   ```python
+   # CSP middleware
+   @app.middleware("http")
+   async def add_csp_header(request: Request, call_next):
+       response = await call_next(request)
+       response.headers['Content-Security-Policy'] = (
+           "default-src 'self'; "
+           "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+           "style-src 'self' 'unsafe-inline'; "
+           "img-src 'self' data: blob: https:; "
+           "font-src 'self'; "
+           "connect-src 'self' wss:;"
+       )
+       return response
+   ```
+
+2. **HTML Sanitization**
+   ```python
+   # Markdown rendering with sanitization
+   def render_markdown(content: str) -> str:
+       html = markdown.markdown(content)
+       return bleach.clean(
+           html,
+           tags=ALLOWED_TAGS,
+           attributes=ALLOWED_ATTRIBUTES,
+           styles=ALLOWED_STYLES,
+           protocols=ALLOWED_PROTOCOLS
+       )
+   ```
+
+### CSRF Protection
+
+1. **Token Generation**
+   ```python
+   # Generate CSRF token
+   def generate_csrf_token() -> str:
+       return secrets.token_urlsafe(32)
+   
+   # Validate CSRF token
+   def validate_csrf_token(request: Request) -> bool:
+       token = request.cookies.get('csrf_token')
+       header_token = request.headers.get('X-CSRF-Token')
+       return token and header_token and token == header_token
+   ```
+
+### Secure Headers
+
+1. **Security Headers Middleware**
+   ```python
+   @app.middleware("http")
+   async def add_security_headers(request: Request, call_next):
+       response = await call_next(request)
+       response.headers.update({
+           'X-Frame-Options': 'DENY',
+           'X-Content-Type-Options': 'nosniff',
+           'X-XSS-Protection': '1; mode=block',
+           'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+           'Referrer-Policy': 'strict-origin-when-cross-origin',
+           'Permissions-Policy': 'geolocation=(), microphone=()'
+       })
+       return response
+   ```
+
+### Access Control
+
+1. **Role-Based Access Control**
+   ```python
+   # Role-based permission decorator
+   def require_role(roles: List[str]):
+       def decorator(func):
+           @wraps(func)
+           async def wrapper(*args, **kwargs):
+               user = get_current_user()
+               if not user or user.role not in roles:
+                   raise NotAuthorizedError()
+               return await func(*args, **kwargs)
+           return wrapper
+       return decorator
+   ```
+
+2. **Resource Access Control**
+   ```python
+   # Resource ownership validation
+   async def validate_resource_access(
+       resource_id: UUID,
+       user_id: UUID,
+       required_permission: str
+   ) -> bool:
+       resource = await get_resource(resource_id)
+       if not resource:
+           return False
+       
+       # Check direct ownership
+       if resource.user_id == user_id:
+           return True
+           
+       # Check shared access
+       access = await get_resource_access(resource_id, user_id)
+       return access and access.permission >= required_permission
+   ```
+
+### Audit Logging
+
+1. **Security Event Logging**
+   ```python
+   # Structured security event logger
+   async def log_security_event(
+       event_type: str,
+       user_id: Optional[UUID],
+       details: dict,
+       severity: str = 'info'
+   ):
+       event = {
+           'timestamp': datetime.utcnow().isoformat(),
+           'event_type': event_type,
+           'user_id': str(user_id) if user_id else None,
+           'ip_address': request.client.host,
+           'user_agent': request.headers.get('User-Agent'),
+           'severity': severity,
+           'details': details
+       }
+       await security_logger.log(event)
+   ```
+
+### Security Monitoring
+
+1. **Failed Login Detection**
+   ```python
+   # Track failed login attempts
+   async def track_failed_login(username: str, ip: str):
+       key = f"failed_login:{username}:{ip}"
+       count = await redis.incr(key)
+       await redis.expire(key, 3600)  # 1 hour window
+       
+       if count >= 5:  # Threshold
+           await block_ip(ip)
+           await log_security_event(
+               'excessive_failed_logins',
+               None,
+               {'username': username, 'ip': ip},
+               'warning'
+           )
+   ```
+
+2. **Suspicious Activity Detection**
+   ```python
+   # Monitor for suspicious patterns
+   async def check_suspicious_activity(user_id: UUID, action: str):
+       window = 300  # 5 minutes
+       key = f"user_activity:{user_id}:{action}"
+       
+       count = await redis.incr(key)
+       await redis.expire(key, window)
+       
+       if count > THRESHOLD_MAP[action]:
+           await log_security_event(
+               'suspicious_activity',
+               user_id,
+               {'action': action, 'count': count},
+               'warning'
+           )
+           return True
+       return False
+   ```
+
+---
+
 *This document provides a high-level overview of the Open WebUI system. For detailed implementation specifics, please refer to the inline code documentation and API specifications.*
