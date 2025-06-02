@@ -304,6 +304,226 @@ Kubernetes deployment configurations:
 
 ---
 
+## Deployment and Configuration Guide
+
+### Environment Setup
+
+#### Development Environment
+1. **Prerequisites**:
+   - Node.js (>=18.13.0)
+   - Python (>=3.8)
+   - Docker and Docker Compose
+   - Git
+
+2. **Local Setup**:
+   ```bash
+   # Clone repository
+   git clone https://github.com/open-webui/open-webui
+   cd open-webui
+
+   # Install dependencies
+   npm install
+   pip install -r backend/requirements.txt
+
+   # Start development servers
+   npm run dev          # Frontend
+   ./backend/dev.sh     # Backend
+   ```
+
+#### Production Environment
+1. **System Requirements**:
+   - CPU: 4+ cores recommended
+   - RAM: 8GB minimum, 16GB+ recommended
+   - Storage: 20GB+ for base system
+   - GPU: Optional, for model acceleration
+
+2. **Dependencies**:
+   - Docker Engine
+   - Docker Compose
+   - NVIDIA Container Runtime (for GPU support)
+
+### Deployment Options
+
+#### Docker Deployment
+1. **Basic Setup**:
+   ```bash
+   docker compose up -d
+   ```
+
+2. **GPU-Enabled Setup**:
+   ```bash
+   docker compose -f docker-compose.gpu.yaml up -d
+   ```
+
+3. **Custom Configuration**:
+   ```bash
+   # Copy example env file
+   cp .env.example .env
+   
+   # Edit configuration
+   vi .env
+   
+   # Deploy with custom config
+   docker compose up -d
+   ```
+
+#### Kubernetes Deployment
+1. **Using Helm**:
+   ```bash
+   cd kubernetes/helm
+   helm install open-webui ./chart
+   ```
+
+2. **Using Raw Manifests**:
+   ```bash
+   kubectl apply -k kubernetes/manifest/base
+   ```
+
+3. **GPU Support**:
+   ```bash
+   kubectl apply -k kubernetes/manifest/gpu
+   ```
+
+### Configuration Guide
+
+#### Core Settings
+1. **Authentication**:
+   ```env
+   WEBUI_AUTH=true
+   WEBUI_JWT_SECRET_KEY=your-secret-key
+   ENABLE_SIGNUP=true
+   ENABLE_OAUTH=true
+   ```
+
+2. **Model Integration**:
+   ```env
+   ENABLE_OLLAMA_API=true
+   OLLAMA_BASE_URL=http://ollama:11434
+   ENABLE_OPENAI_API=false
+   ```
+
+3. **Features**:
+   ```env
+   ENABLE_CHANNELS=true
+   ENABLE_NOTES=true
+   ENABLE_IMAGE_GENERATION=true
+   ENABLE_CODE_EXECUTION=true
+   ```
+
+#### Advanced Configuration
+
+1. **Performance Tuning**:
+   ```env
+   THREAD_POOL_SIZE=8
+   RAG_EMBEDDING_BATCH_SIZE=32
+   CHUNK_SIZE=1500
+   CHUNK_OVERLAP=200
+   ```
+
+2. **Security Settings**:
+   ```env
+   CORS_ALLOW_ORIGIN=["http://localhost:3000"]
+   ENABLE_API_KEY=true
+   ENABLE_ADMIN_CHAT_ACCESS=false
+   ```
+
+3. **Storage Configuration**:
+   ```env
+   REDIS_URL=redis://redis:6379
+   UPLOAD_DIR=/app/backend/uploads
+   ```
+
+### Monitoring and Maintenance
+
+#### Health Checks
+1. **Backend Health**:
+   ```bash
+   curl http://localhost:8080/health
+   curl http://localhost:8080/health/db
+   ```
+
+2. **Frontend Health**:
+   ```bash
+   curl http://localhost:3000
+   ```
+
+#### Logging
+1. **Container Logs**:
+   ```bash
+   docker compose logs -f webui
+   docker compose logs -f ollama
+   ```
+
+2. **Application Logs**:
+   ```env
+   GLOBAL_LOG_LEVEL=info
+   AUDIT_LOG_LEVEL=info
+   ```
+
+#### Backup Procedures
+1. **Database Backup**:
+   ```bash
+   docker compose exec db pg_dump -U postgres > backup.sql
+   ```
+
+2. **File Backup**:
+   ```bash
+   tar -czf uploads.tar.gz /path/to/upload/dir
+   ```
+
+### Scaling Considerations
+
+#### Horizontal Scaling
+1. **Frontend**:
+   - Deploy multiple replicas
+   - Use load balancer
+   - Configure session affinity
+
+2. **Backend**:
+   - Scale API servers independently
+   - Use Redis for session storage
+   - Configure connection pooling
+
+#### Resource Scaling
+1. **CPU/Memory**:
+   ```yaml
+   resources:
+     limits:
+       cpu: "2"
+       memory: "4Gi"
+     requests:
+       cpu: "500m"
+       memory: "1Gi"
+   ```
+
+2. **Storage**:
+   ```yaml
+   volumes:
+     - name: data
+       persistentVolumeClaim:
+         claimName: open-webui-data
+   ```
+
+### Troubleshooting Guide
+
+#### Common Issues
+1. **Connection Issues**:
+   - Check network connectivity
+   - Verify service endpoints
+   - Check firewall rules
+
+2. **Performance Issues**:
+   - Monitor resource usage
+   - Check database queries
+   - Analyze application logs
+
+3. **Authentication Issues**:
+   - Verify JWT configuration
+   - Check OAuth settings
+   - Validate user permissions
+
+---
+
 ## Data Flows and Integration Patterns
 
 ### Chat Completion Flow
