@@ -304,4 +304,84 @@ Kubernetes deployment configurations:
 
 ---
 
-*This document will be updated as we explore more specific components of the system.*
+## Data Flows and Integration Patterns
+
+### Chat Completion Flow
+1. **User Input Processing**:
+   - Message validation and sanitization
+   - Context assembly from history
+   - File attachment handling
+   - Tool/function detection
+
+2. **Model Interaction**:
+   - Provider selection (Ollama/OpenAI/etc.)
+   - Parameter configuration
+   - Stream handling setup
+   - Response processing
+
+3. **Response Processing**:
+   - Markdown rendering
+   - Code block handling
+   - Media content processing
+   - Tool output formatting
+
+### Document Processing Flow
+1. **Upload Handling**:
+   - File validation
+   - Virus scanning
+   - Size limit checking
+   - Format detection
+
+2. **Content Extraction**:
+   - Text extraction by format
+   - OCR for images/PDFs
+   - Metadata extraction
+   - Structure preservation
+
+3. **Knowledge Integration**:
+   - Content chunking
+   - Embedding generation
+   - Vector storage
+   - Index updating
+
+### Real-time Communication Flow
+1. **WebSocket Management**:
+   - Connection handling
+   - Session management
+   - Event routing
+   - Reconnection logic
+
+2. **Event Processing**:
+   - Message serialization
+   - State synchronization
+   - Broadcast handling
+   - Error recovery
+
+### Integration Patterns
+1. **Model Integration**:
+   - Adapter pattern for providers
+   - Configuration management
+   - Response standardization
+   - Error handling
+
+2. **Storage Integration**:
+   - Repository pattern
+   - Caching strategies
+   - Transaction management
+   - Backup procedures
+
+3. **External Services**:
+   - API abstraction
+   - Rate limiting
+   - Circuit breaking
+   - Retry logic
+
+4. **Plugin System**:
+   - Module loading
+   - Dependency management
+   - Configuration handling
+   - Lifecycle management
+
+---
+
+*This document provides a high-level overview of the Open WebUI system. For detailed implementation specifics, please refer to the inline code documentation and API specifications.*
