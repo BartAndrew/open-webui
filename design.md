@@ -304,6 +304,197 @@ Kubernetes deployment configurations:
 
 ---
 
+## Windows 11 Development Setup Guide
+
+### System Requirements
+- Windows 11 Pro, Enterprise, or Education (for WSL2 support)
+- 8GB RAM minimum (16GB+ recommended)
+- 100GB free disk space
+- Processor with virtualization support
+
+### Initial Setup
+
+1. **Enable Windows Features**:
+   ```powershell
+   # Enable Windows Subsystem for Linux and Virtual Machine Platform
+   dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+   dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+   ```
+
+2. **Install WSL2**:
+   ```powershell
+   # Install WSL2 with Ubuntu
+   wsl --install -d Ubuntu
+   
+   # Set WSL2 as default
+   wsl --set-default-version 2
+   ```
+
+3. **Install Development Tools**:
+   - [Git for Windows](https://git-scm.com/download/win)
+   - [Visual Studio Code](https://code.visualstudio.com/)
+   - [Docker Desktop](https://www.docker.com/products/docker-desktop)
+   - [Node.js LTS](https://nodejs.org/)
+   - [Python 3.8+](https://www.python.org/downloads/)
+
+4. **Configure Git**:
+   ```bash
+   git config --global user.name "Your Name"
+   git config --global user.email "your.email@example.com"
+   ```
+
+### Project Setup
+
+1. **Clone Repository**:
+   ```bash
+   # Create development directory
+   mkdir C:\DEV
+   cd C:\DEV
+   
+   # Clone repository
+   git clone https://github.com/open-webui/open-webui
+   cd open-webui
+   ```
+
+2. **Install Node Dependencies**:
+   ```bash
+   # Install npm packages
+   npm install
+   ```
+
+3. **Setup Python Environment**:
+   ```bash
+   # Create virtual environment
+   python -m venv venv
+   
+   # Activate virtual environment
+   .\venv\Scripts\activate
+   
+   # Install requirements
+   pip install -r backend\requirements.txt
+   ```
+
+4. **Configure Environment**:
+   ```bash
+   # Copy example environment file
+   copy .env.example .env
+   
+   # Edit .env file with your settings
+   code .env
+   ```
+
+### Running the Application
+
+1. **Start Backend Server**:
+   ```bash
+   # In one terminal
+   .\venv\Scripts\activate
+   cd backend
+   python -m uvicorn open_webui.main:app --reload
+   ```
+
+2. **Start Frontend Development Server**:
+   ```bash
+   # In another terminal
+   npm run dev
+   ```
+
+3. **Access the Application**:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs
+
+### Docker Setup (Alternative)
+
+1. **Configure Docker Desktop**:
+   - Open Docker Desktop
+   - Go to Settings > Resources
+   - Allocate at least 4GB RAM
+   - Enable WSL2 integration
+
+2. **Run with Docker Compose**:
+   ```bash
+   # Start services
+   docker compose up -d
+   
+   # View logs
+   docker compose logs -f
+   ```
+
+### IDE Configuration
+
+1. **VS Code Extensions**:
+   ```bash
+   # Install recommended extensions
+   code --install-extension svelte.svelte-vscode
+   code --install-extension ms-python.python
+   code --install-extension dbaeumer.vscode-eslint
+   code --install-extension esbenp.prettier-vscode
+   ```
+
+2. **VS Code Settings**:
+   ```json
+   {
+     "editor.formatOnSave": true,
+     "editor.defaultFormatter": "esbenp.prettier-vscode",
+     "python.formatting.provider": "black",
+     "python.linting.enabled": true,
+     "python.linting.pylintEnabled": true
+   }
+   ```
+
+### Troubleshooting
+
+1. **WSL Issues**:
+   ```powershell
+   # Reset WSL
+   wsl --shutdown
+   wsl --unregister Ubuntu
+   wsl --install -d Ubuntu
+   ```
+
+2. **Docker Issues**:
+   ```powershell
+   # Reset Docker Desktop
+   wsl --shutdown
+   net stop com.docker.service
+   net start com.docker.service
+   ```
+
+3. **Port Conflicts**:
+   ```powershell
+   # Find process using port
+   netstat -ano | findstr :3000
+   netstat -ano | findstr :8000
+   
+   # Kill process
+   taskkill /PID <process_id> /F
+   ```
+
+### Development Tips
+
+1. **Hot Reload**:
+   - Frontend changes automatically reload
+   - Backend changes trigger uvicorn reload
+   - Database changes require manual restart
+
+2. **Testing**:
+   ```bash
+   # Run frontend tests
+   npm run test
+   
+   # Run backend tests
+   pytest backend/tests
+   
+   # Run e2e tests
+   npm run cy:open
+   ```
+
+3. **Debugging**:
+   - Use VS Code's debugger for Python
+   - Use Chrome DevTools for frontend
+   - Check Docker logs for service issues
+
 ## Deployment and Configuration Guide
 
 ### Environment Setup
