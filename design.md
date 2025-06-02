@@ -8,23 +8,46 @@ Open WebUI is a comprehensive web-based user interface for interacting with AI m
 
 ### Frontend
 - **Framework**: SvelteKit (based on .svelte files and svelte.config.js)
-- **Styling**: Tailwind CSS (tailwind.config.js, postcss.config.js)
-- **Language**: TypeScript (tsconfig.json, .ts files)
-- **Build Tool**: Vite (vite.config.ts)
-- **Package Manager**: npm (package.json, package-lock.json)
+- **Styling**: Tailwind CSS with container queries and typography support
+- **Language**: TypeScript with full type checking
+- **Build Tool**: Vite with hot module replacement
+- **UI Components**: Rich text editor (TipTap), code editor (CodeMirror), flow diagrams (XYFlow)
+- **State Management**: Native Svelte stores
+- **Internationalization**: i18next with automatic parsing
+- **Markdown**: Marked with KaTeX and syntax highlighting
+- **WebSocket**: Socket.IO client for real-time features
+- **PWA Support**: Full Progressive Web App capabilities
 
 ### Backend
-- **Language**: Python (pyproject.toml, .py files)
-- **Framework**: Likely FastAPI or similar (based on structure)
-- **Database**: To be determined
-- **WebSocket Support**: Yes (socket/ directory)
+- **Framework**: FastAPI with WebSocket support
+- **Database**: SQLAlchemy ORM with migrations
+- **Authentication**: JWT, OAuth providers, LDAP support
+- **WebSocket**: Socket.IO for real-time communication
+- **File Processing**: Multiple document loaders and processors
+- **Caching**: Redis with sentinel support
+- **Task Queue**: Background task processing
+- **Telemetry**: OpenTelemetry integration
 
-### Additional Technologies
-- **Internationalization**: i18next (i18next-parser.config.ts)
-- **Testing**: Cypress (cypress.config.ts)
-- **Containerization**: Docker (Dockerfile, docker-compose files)
-- **Kubernetes**: Support included (kubernetes/ directory)
-- **Python in Browser**: Pyodide integration
+### AI Integration
+- **Model Support**:
+  - Ollama integration
+  - OpenAI API compatibility
+  - Azure OpenAI integration
+  - Direct model connections
+- **Features**:
+  - Text generation
+  - Chat completion
+  - Image generation
+  - Audio processing (TTS/STT)
+  - Code execution
+  - RAG (Retrieval Augmented Generation)
+
+### DevOps
+- **Containerization**: Docker with multi-stage builds
+- **Orchestration**: Kubernetes with Helm charts
+- **GPU Support**: NVIDIA and AMD GPU configurations
+- **Testing**: Cypress for E2E testing
+- **CI/CD**: GitHub Actions ready
 
 ## Project Structure Analysis
 
@@ -76,84 +99,208 @@ Kubernetes deployment configurations:
 ## Core Features Analysis
 
 ### 1. Chat Interface
-- Real-time messaging with AI models
-- WebSocket support for live interactions
-- Message history and conversation management
+- Real-time messaging with AI models via WebSocket
+- Message history and conversation threading
+- Rich text formatting with Markdown support
+- Code highlighting and execution
+- File attachments and media support
+- Voice input/output capabilities
+- Context-aware responses
+- Conversation export/import
 
-### 2. Multi-Model Support
-- Integration with Ollama
-- Support for multiple AI backends
-- Model selection and configuration
+### 2. AI Model Integration
+- Ollama model management and deployment
+- OpenAI API compatibility layer
+- Azure OpenAI service integration
+- Direct model connections
+- Model performance monitoring
+- Custom model configurations
+- Temperature and parameter controls
+- Response streaming
 
 ### 3. Document Management
-- File upload and processing
-- Document storage and retrieval
-- Integration with chat context
+- Multi-format file upload (PDF, DOCX, TXT, etc.)
+- Document OCR and text extraction
+- Automatic content chunking
+- Vector-based similarity search
+- Full-text search capabilities
+- Document version control
+- Access permissions management
+- Web page import and processing
 
-### 4. User Management
-- Authentication and authorization
-- User profiles and settings
-- Multi-user support
+### 4. Knowledge Management
+- RAG (Retrieval Augmented Generation)
+- Document embeddings generation
+- Semantic search functionality
+- Knowledge base organization
+- Custom collection management
+- Citation and source tracking
+- Content relevancy scoring
+- Hybrid search capabilities
 
-### 5. Internationalization
-- Support for multiple languages
-- Localization files in various languages
-- Dynamic language switching
+### 5. User System
+- Role-based access control (RBAC)
+- OAuth provider integration
+- LDAP authentication support
+- API key management
+- User preferences storage
+- Activity history tracking
+- Usage quotas and limits
+- Profile customization
 
-### 6. Theming
-- Dark/light mode support
-- Custom theme files (Rosepine themes)
-- Responsive design
+### 6. Tools & Functions
+- Custom function definitions
+- External API integrations
+- Code execution sandbox
+- Tool chaining capabilities
+- Function parameter validation
+- Error handling and logging
+- Rate limiting and quotas
+- Usage analytics
 
-### 7. Progressive Web App (PWA)
-- Offline capabilities
-- Installable as native app
-- Push notifications support
+### 7. Administration
+- User management interface
+- System configuration panel
+- Usage monitoring and analytics
+- Audit logging and tracking
+- Backup and restore capabilities
+- Model deployment management
+- Resource allocation control
+- System health monitoring
 
 ### 8. Workspace Features
-- Tools management
-- Knowledge base
-- Prompts library
-- Model configuration
+- Customizable layouts
+- Tool integration framework
+- Knowledge base management
+- Prompt template library
+- Model configuration interface
+- File organization system
+- Search and filter capabilities
+- Sharing and collaboration tools
 
 ## Technical Architecture
 
 ### Frontend Architecture
-- Component-based structure using Svelte
-- Reactive state management
-- Client-side routing with SvelteKit
-- WebSocket connections for real-time features
+- **Component Structure**:
+  - SvelteKit-based routing and layouts
+  - Reusable UI component library
+  - Atomic design principles
+  - Responsive and accessible design
+
+- **State Management**:
+  - Svelte stores for global state
+  - Context API for component trees
+  - Persistent storage with IndexedDB
+  - Real-time sync via WebSocket
+
+- **Performance Optimizations**:
+  - Code splitting and lazy loading
+  - Asset optimization and caching
+  - Service worker for offline support
+  - Virtual scrolling for large lists
+
+- **UI/UX Features**:
+  - Dark/light theme support
+  - Responsive layouts
+  - Keyboard navigation
+  - Accessibility compliance
+  - Error boundary handling
 
 ### Backend Architecture
-- RESTful API design
-- WebSocket server for real-time communication
-- Modular service structure
-- Plugin system support
+- **API Layer**:
+  - RESTful endpoints with OpenAPI specs
+  - WebSocket server for real-time events
+  - GraphQL support for complex queries
+  - Rate limiting and throttling
 
-### Deployment Architecture
-- Docker containerization
-- Kubernetes orchestration support
-- Multiple deployment options (GPU, CPU)
-- Scalable architecture
+- **Service Layer**:
+  - Modular service architecture
+  - Dependency injection pattern
+  - Background task processing
+  - Caching strategies
 
-## Security Features
-- User authentication
-- API security
-- CORS configuration
-- Environment-based configuration
+- **Data Layer**:
+  - SQLAlchemy ORM models
+  - Migration management
+  - Connection pooling
+  - Query optimization
 
-## Development Workflow
-- Hot reload support
-- Development scripts
-- Testing infrastructure
-- CI/CD ready structure
+- **Integration Layer**:
+  - Model provider adapters
+  - External service connectors
+  - Plugin system
+  - Webhook management
 
-## Integration Points
-- Ollama integration
-- External API support
-- Plugin system
-- Webhook support
-- OAuth integration
+### Security Architecture
+- **Authentication**:
+  - JWT token management
+  - OAuth 2.0 integration
+  - LDAP authentication
+  - API key validation
+
+- **Authorization**:
+  - Role-based access control
+  - Resource-level permissions
+  - Token scope validation
+  - Rate limiting
+
+- **Data Protection**:
+  - Input validation
+  - XSS prevention
+  - CSRF protection
+  - SQL injection prevention
+  - Data encryption
+
+### Infrastructure Architecture
+- **Containerization**:
+  - Multi-stage Docker builds
+  - Container optimization
+  - Resource management
+  - Health monitoring
+
+- **Orchestration**:
+  - Kubernetes deployment
+  - Service scaling
+  - Load balancing
+  - Resource allocation
+  - High availability setup
+
+- **Storage**:
+  - Persistent volumes
+  - Object storage
+  - Backup systems
+  - Data replication
+
+- **Monitoring**:
+  - OpenTelemetry integration
+  - Performance metrics
+  - Error tracking
+  - Usage analytics
+
+### Development Architecture
+- **Local Development**:
+  - Hot reload setup
+  - Development containers
+  - Mock services
+  - Debug tooling
+
+- **Testing Strategy**:
+  - Unit testing framework
+  - Integration testing
+  - E2E testing with Cypress
+  - Performance testing
+
+- **CI/CD Pipeline**:
+  - Automated builds
+  - Test automation
+  - Deployment automation
+  - Environment management
+
+- **Code Quality**:
+  - Linting and formatting
+  - Type checking
+  - Code review process
+  - Documentation generation
 
 ---
 
